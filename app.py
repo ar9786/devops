@@ -43,5 +43,27 @@ def form():
 def success():
     return render_template('success.html')
 
+
+@app.route('/submittodoitem', methods=['POST'])
+def submit_todo_item():
+    try:
+        data = request.get_json()
+        item_name = data.get('itemName')
+        item_description = data.get('itemDescription')
+
+        if not item_name or not item_description:
+            return jsonify({'error': 'Missing itemName or itemDescription'}), 400
+
+        collection.insert_one({
+            'itemName': item_name,
+            'itemDescription': item_description
+        })
+
+        return jsonify({'message': 'Item saved successfully'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
