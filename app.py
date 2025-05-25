@@ -44,25 +44,27 @@ def success():
     return render_template('success.html')
 
 
-@app.route('/submittodoitem', methods=['POST'])
+@app.route('/submittodoitem', methods=['GET','POST'])
 def submit_todo_item():
-    try:
-        data = request.get_json()
-        item_name = data.get('itemName')
-        item_description = data.get('itemDescription')
+    error_message = None
+    if request.method == 'POST':
+        item_name = request.form.get('itemName')
+        item_description = request.form.get('itemDescription')
 
         if not item_name or not item_description:
-            return jsonify({'error': 'Missing itemName or itemDescription'}), 400
+            error_message = "Both fields are required."
+        else:
+            try:
+                collection.insert_one({
+                    'itemName': item_name,
+                    'itemDescription': item_description
+                })
+                return redirect(url_for('success'))
+            except PyMongoError as e:
+                error_message = f"Database Error: {str(e)}"
 
-        collection.insert_one({
-            'itemName': item_name,
-            'itemDescription': item_description
-        })
+    return render_template('todo.html', error=error_message)
 
-        return jsonify({'message': 'Item saved successfully'}), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
